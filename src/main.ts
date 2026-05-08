@@ -4,16 +4,22 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // ✅ Libera acesso do Flutter/Web
-  app.enableCors();
+  // ✅ CORS liberado para Flutter/Web
+  app.enableCors({
+    origin: '*',
+    credentials: true,
+  });
 
-  // ✅ Porta Railway
-  const port = process.env.PORT || 3000;
+  // ✅ Porta dinâmica Railway
+  const port = Number(process.env.PORT) || 3000;
 
-  // ✅ Escuta rede pública Railway
+  // ✅ Bind obrigatório Railway
   await app.listen(port, '0.0.0.0');
 
   console.log(`🚀 API ONLINE NA PORTA ${port}`);
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('❌ ERRO AO INICIAR API:', err);
+  process.exit(1);
+});
