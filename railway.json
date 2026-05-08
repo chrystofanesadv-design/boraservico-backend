@@ -6,6 +6,7 @@
   },
   "deploy": {
     "runtime": "V2",
+    "startCommand": "node dist/src/main.js",
     "numReplicas": 1,
     "sleepApplication": false,
     "useLegacyStacker": false,
