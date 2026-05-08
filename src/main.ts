@@ -3,6 +3,17 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 3000);
+
+  // ✅ Libera acesso do Flutter/Web
+  app.enableCors();
+
+  // ✅ Porta Railway
+  const port = process.env.PORT || 3000;
+
+  // ✅ Escuta rede pública Railway
+  await app.listen(port, '0.0.0.0');
+
+  console.log(`🚀 API ONLINE NA PORTA ${port}`);
 }
+
 bootstrap();
