@@ -9,8 +9,8 @@
   "scripts": {
     "build": "nest build",
 
-    "start": "node dist/main",
-    "start:prod": "node dist/main",
+    "start": "node dist/src/main.js",
+    "start:prod": "node dist/src/main.js",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
 
