@@ -1,61 +1,63 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+﻿import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+} from '@nestjs/common';
+
 import { DisputesService } from './disputes.service';
 
 @Controller('disputes')
 export class DisputesController {
-  constructor(private readonly service: DisputesService) {}
+  constructor(
+    private readonly disputesService: DisputesService,
+  ) {}
 
-  // 📌 listar todas disputas (ADMIN DASHBOARD)
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(): any {
+    return this.disputesService.findAll();
   }
 
-  // 📌 ver disputa específica
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  findOne(@Param('id') id: string): any {
+    return this.disputesService.findOne(id);
   }
 
-  // 📌 abrir disputa (cliente/profissional)
   @Post()
-  create(@Body() body: any) {
-    return this.service.createDispute(body);
+  create(@Body() body: any): any {
+    return this.disputesService.create(body);
   }
 
-  // 📌 cliente responde
   @Post(':id/client')
-  client(
+  clientEvidence(
     @Param('id') id: string,
-    @Body('message') message: string,
-  ) {
-    return this.service.clientResponse(id, message);
+    @Body() body: any,
+  ): any {
+    return this.disputesService.addClientEvidence(id, body);
   }
 
-  // 📌 profissional responde
   @Post(':id/professional')
-  professional(
+  professionalEvidence(
     @Param('id') id: string,
-    @Body('message') message: string,
-  ) {
-    return this.service.professionalResponse(id, message);
+    @Body() body: any,
+  ): any {
+    return this.disputesService.addProfessionalEvidence(id, body);
   }
 
-  // 📌 🔥 ADMIN RESOLVE DISPUTA (CORE DO DASHBOARD)
   @Post(':id/resolve')
   resolve(
     @Param('id') id: string,
-    @Body() body: { decision: 'CLIENT_WINS' | 'PROFESSIONAL_WINS' | 'PARTIAL_REFUND' },
-  ) {
-    return this.service.resolve(id, body.decision);
+    @Body() body: any,
+  ): any {
+    return this.disputesService.resolve(id, body);
   }
 
-  // 📌 🔥 OVERRIDE TOTAL (ADMIN FORÇA DECISÃO FINAL)
   @Post(':id/override')
   override(
     @Param('id') id: string,
-    @Body() body: { decision: string },
-  ) {
-    return this.service.forceResolve(id, body);
+    @Body() body: any,
+  ): any {
+    return this.disputesService.override(id, body);
   }
 }

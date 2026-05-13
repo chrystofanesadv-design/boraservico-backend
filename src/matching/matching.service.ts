@@ -1,253 +1,134 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 
-import { PrismaService } from '../prisma/prisma.service';
-import { NotificationsGateway } from '../notifications/notifications.gateway';
-import { PaymentsService } from '../payments/payments.service';
-import { FraudService } from '../security/fraud.service';
+interface ProfessionalMock {
+  id: string;
+  name: string;
+  category: string;
+  rating: number;
+  distanceKm: number;
+  online: boolean;
+  priority: number;
+}
+
+interface DispatchMock {
+  id: string;
+  orderId: string;
+  category: string;
+  status: 'DISPATCHED' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
+  radiusKm: number;
+  professionals: ProfessionalMock[];
+  selectedProfessionalId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 @Injectable()
 export class MatchingService {
-  constructor(
-    private prisma: PrismaService,
-    private notifications: NotificationsGateway,
-    private payments: PaymentsService,
-    private fraudService: FraudService,
-  ) {}
+  private professionals: ProfessionalMock[] = [
+    {
+      id: 'profissional-1',
+      name: 'Carlos Eletricista',
+      category: 'eletrica',
+      rating: 4.9,
+      distanceKm: 1.2,
+      online: true,
+      priority: 100,
+    },
+    {
+      id: 'profissional-2',
+      name: 'Joao Reparos',
+      category: 'eletrica',
+      rating: 4.7,
+      distanceKm: 2.4,
+      online: true,
+      priority: 90,
+    },
+    {
+      id: 'profissional-3',
+      name: 'Ana Limpeza',
+      category: 'limpeza',
+      rating: 4.8,
+      distanceKm: 1.8,
+      online: true,
+      priority: 95,
+    },
+  ];
 
-  // 🔥 profissionais próximos
-  async findProfessionalsNearby(
-    lat: number,
-    lng: number,
-    radiusKm = 5,
-  ) {
-    return this.prisma.$queryRaw<any[]>`
-      SELECT 
-        u.id,
-        u.email,
-        p.location,
-        (
-          6371 * acos(
-            cos(radians(${lat})) *
-            cos(radians(ST_Y(p.location))) *
-            cos(radians(ST_X(p.location)) - radians(${lng})) +
-            sin(radians(${lat})) *
-            sin(radians(ST_Y(p.location)))
-          )
-        ) AS distance
-      FROM "User" u
-      INNER JOIN "Profile" p ON p."userId" = u.id
-      WHERE u.role = 'PROFESSIONAL'
-        AND p.location IS NOT NULL
-      HAVING (
-        6371 * acos(
-          cos(radians(${lat})) *
-          cos(radians(ST_Y(p.location))) *
-          cos(radians(ST_X(p.location)) - radians(${lng})) +
-          sin(radians(${lat})) *
-          sin(radians(ST_Y(p.location)))
-        )
-      ) <= ${radiusKm}
-      ORDER BY distance ASC
-      LIMIT 20;
-    `;
+  private dispatches: DispatchMock[] = [];
+
+  private normalizeCategory(category?: string): string {
+    return (category ?? 'eletrica')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '')
+      .trim();
   }
 
-  // 🚀 dispatch realtime
-  async dispatchService(serviceOrder: any) {
-    const lat = serviceOrder.location.y;
-    const lng = serviceOrder.location.x;
+  listProfessionals(): ProfessionalMock[] {
+    return this.professionals;
+  }
 
-    const professionals =
-      await this.findProfessionalsNearby(lat, lng);
+  listDispatches(): DispatchMock[] {
+    return this.dispatches;
+  }
 
-    const batchSize = 3;
-    const batches: any[] = [];
+  dispatch(data: any): DispatchMock {
+    const category = this.normalizeCategory(data?.category);
+    const radiusKm = Number(data?.radiusKm ?? 5);
 
-    for (
-      let i = 0;
-      i < professionals.length;
-      i += batchSize
-    ) {
-      batches.push(
-        professionals.slice(i, i + batchSize),
-      );
-    }
+    const matchedProfessionals = this.professionals
+      .filter((professional) => professional.online)
+      .filter((professional) => professional.distanceKm <= radiusKm)
+      .filter((professional) => professional.category === category)
+      .sort((a, b) => b.priority - a.priority || b.rating - a.rating);
 
-    const payload = {
-      serviceOrderId: serviceOrder.id,
-
-      location: {
-        lat,
-        lng,
-      },
-
-      totalProfessionals: professionals.length,
-
-      batches: batches.map((batch, index) => ({
-        batch: index + 1,
-
-        professionals: batch.map((p) => ({
-          id: p.id,
-          email: p.email,
-          distance_km: Number(
-            Number(p.distance).toFixed(2),
-          ),
-        })),
-      })),
+    const dispatch: DispatchMock = {
+      id: crypto.randomUUID(),
+      orderId: data?.orderId ?? crypto.randomUUID(),
+      category,
+      radiusKm,
+      status: 'DISPATCHED',
+      professionals: matchedProfessionals,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
-    this.notifications.sendToProfessionals(
-      'new-service',
-      {
-        type: 'NEW_SERVICE',
-        payload,
-      },
-    );
+    this.dispatches.push(dispatch);
 
-    return payload;
+    return dispatch;
   }
 
-  // 💰 ACCEPT + ESCROW
-  async acceptService(
-    serviceOrderId: string,
-    professionalId: string,
-  ) {
-    const order =
-      await this.prisma.serviceOrder.findUnique({
-        where: {
-          id: serviceOrderId,
-        },
-      });
+  accept(data: any): DispatchMock | { error: string; message: string } {
+    const dispatch = this.dispatches.find((item) => item.id === data?.dispatchId);
 
-    if (!order) {
+    if (!dispatch) {
       return {
-        message: 'Serviço não encontrado',
+        error: 'DISPATCH_NOT_FOUND',
+        message: 'Disparo nao encontrado',
       };
     }
 
-    // 🚫 antifraude
-    await this.fraudService.validateSelfAccept(
-      order.clientId,
-      professionalId,
-    );
+    dispatch.status = 'ACCEPTED';
+    dispatch.selectedProfessionalId = data?.professionalId;
+    dispatch.updatedAt = new Date();
 
-    // 🔐 dupla aceitação
-    if (order.professionalId) {
-      return {
-        message:
-          'Já aceito por outro profissional',
-      };
-    }
-
-    if (
-      order.status !== 'CREATED' &&
-      order.status !== 'MATCHING'
-    ) {
-      return {
-        message:
-          'Serviço não disponível para aceite',
-      };
-    }
-
-    // 🔥 atualiza status
-    const updated =
-      await this.prisma.serviceOrder.update({
-        where: {
-          id: serviceOrderId,
-        },
-
-        data: {
-          professionalId,
-          status: 'ACCEPTED',
-          acceptedAt: new Date(),
-        },
-      });
-
-    // 💰 escrow
-    try {
-      await this.payments.createEscrow(
-        serviceOrderId,
-        order.clientId,
-        Number(order.price),
-      );
-    } catch (err: any) {
-      console.log(
-        'ESCROW ERROR:',
-        err.message,
-      );
-    }
-
-    this.notifications.sendToAll(
-      'service-accepted',
-      {
-        serviceOrderId,
-        professionalId,
-        status: 'ACCEPTED',
-      },
-    );
-
-    return updated;
+    return dispatch;
   }
 
-  // 🏁 FINALIZAÇÃO
-  async completeService(serviceOrderId: string) {
-    const order =
-      await this.prisma.serviceOrder.findUnique({
-        where: {
-          id: serviceOrderId,
-        },
-      });
+  reject(data: any): DispatchMock | { error: string; message: string } {
+    const dispatch = this.dispatches.find((item) => item.id === data?.dispatchId);
 
-    if (!order) {
+    if (!dispatch) {
       return {
-        message: 'Serviço não encontrado',
+        error: 'DISPATCH_NOT_FOUND',
+        message: 'Disparo nao encontrado',
       };
     }
 
-    // 🚫 antifraude
-    await this.fraudService.validateServiceCompletion(
-      order.status,
-    );
+    dispatch.status = 'REJECTED';
+    dispatch.updatedAt = new Date();
 
-    if (order.status !== 'ACCEPTED') {
-      return {
-        message:
-          'Serviço não pode ser finalizado',
-      };
-    }
-
-    const updated =
-      await this.prisma.serviceOrder.update({
-        where: {
-          id: serviceOrderId,
-        },
-
-        data: {
-          status: 'COMPLETED',
-          completedAt: new Date(),
-        },
-      });
-
-    // 💸 libera escrow
-    try {
-      await this.payments.releasePayment(
-        serviceOrderId,
-      );
-    } catch (err: any) {
-      console.log(
-        'RELEASE ERROR:',
-        err.message,
-      );
-    }
-
-    this.notifications.sendToAll(
-      'service-completed',
-      {
-        serviceOrderId,
-        status: 'COMPLETED',
-      },
-    );
-
-    return updated;
+    return dispatch;
   }
 }

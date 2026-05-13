@@ -1,169 +1,163 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 
-import { PrismaService } from '../prisma/prisma.service';
-import { PaymentsService } from '../payments/payments.service';
-import { FraudService } from '../security/fraud.service';
+type DisputeStatus =
+  | 'OPEN'
+  | 'UNDER_REVIEW'
+  | 'RESOLVED'
+  | 'OVERRIDDEN';
+
+type ResolutionType =
+  | 'FULL_REFUND'
+  | 'PARTIAL_REFUND'
+  | 'RELEASE_PAYMENT';
+
+interface Evidence {
+  author: 'CLIENT' | 'PROFESSIONAL';
+  message: string;
+  createdAt: Date;
+}
+
+interface DisputeMock {
+  id: string;
+  orderId: string;
+  clientId: string;
+  professionalId: string;
+  reason: string;
+  status: DisputeStatus;
+  resolution?: ResolutionType;
+  escrowAmount: number;
+  releasedAmount?: number;
+  refundedAmount?: number;
+  evidences: Evidence[];
+  aiAnalysis?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 @Injectable()
 export class DisputesService {
-  constructor(
-    private prisma: PrismaService,
-    private payments: PaymentsService,
-    private fraudService: FraudService,
-  ) {}
+  private disputes: DisputeMock[] = [];
 
-  // ⚖️ ABRIR DISPUTA
-  async createDispute(data: {
-    serviceOrderId: string;
-    clientId: string;
-    professionalId?: string;
-    reason: string;
-  }) {
-    // 🚫 evita disputa duplicada
-    await this.fraudService.validateDispute(
-      data.serviceOrderId,
-    );
+  create(data: any) {
+    const dispute: DisputeMock = {
+      id: crypto.randomUUID(),
+      orderId: data?.orderId ?? '',
+      clientId: data?.clientId ?? '',
+      professionalId: data?.professionalId ?? '',
+      reason: data?.reason ?? 'Disputa aberta',
+      status: 'OPEN',
+      escrowAmount: Number(data?.escrowAmount ?? 0),
+      evidences: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-    return this.prisma.dispute.create({
-      data: {
-        serviceOrderId: data.serviceOrderId,
-        clientId: data.clientId,
-        professionalId: data.professionalId,
-        reason: data.reason,
-        status: 'OPEN',
-      },
-    });
-  }
-
-  // 📋 LISTAR DISPUTAS
-  async findAll() {
-    return this.prisma.dispute.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  }
-
-  // 🔎 BUSCAR UMA
-  async findOne(id: string) {
-    const dispute = await this.prisma.dispute.findUnique({
-      where: {
-        id,
-      },
-    });
-
-    if (!dispute) {
-      throw new Error('Disputa não encontrada');
-    }
+    this.disputes.push(dispute);
 
     return dispute;
   }
 
-  // 👤 CLIENTE RESPONDE
-  async clientResponse(
-    id: string,
-    message: string,
-  ) {
-    return this.prisma.dispute.update({
-      where: {
-        id,
-      },
-      data: {
-        status: 'CLIENT',
-        resolution: message,
-      },
-    });
+  findAll() {
+    return this.disputes;
   }
 
-  // 👷 PROFISSIONAL RESPONDE
-  async professionalResponse(
-    id: string,
-    message: string,
-  ) {
-    return this.prisma.dispute.update({
-      where: {
-        id,
-      },
-      data: {
-        status: 'PROFESSIONAL',
-        resolution: message,
-      },
-    });
+  findOne(id: string) {
+    return this.disputes.find((item) => item.id === id) ?? null;
   }
 
-  // 🧠 RESOLVER DISPUTA
-  async resolve(
-    id: string,
-    decision:
-      | 'CLIENT_WINS'
-      | 'PROFESSIONAL_WINS'
-      | 'PARTIAL_REFUND',
-  ) {
-    const dispute = await this.prisma.dispute.findUnique({
-      where: {
-        id,
-      },
-    });
+  addClientEvidence(id: string, data: any) {
+    const dispute = this.findOne(id);
 
     if (!dispute) {
-      throw new Error('Disputa não encontrada');
+      return {
+        error: 'DISPUTE_NOT_FOUND',
+      };
     }
 
-    // 🚫 evita resolver 2x
-    if (dispute.status === 'RESOLVED') {
-      throw new Error('Disputa já resolvida');
-    }
-
-    // 💣 resolve disputa
-    const updated = await this.prisma.dispute.update({
-      where: {
-        id,
-      },
-      data: {
-        status: 'RESOLVED',
-        resolution: decision,
-        resolvedAt: new Date(),
-      },
+    dispute.evidences.push({
+      author: 'CLIENT',
+      message: data?.message ?? '',
+      createdAt: new Date(),
     });
 
-    // 💰 ENGINE FINANCEIRA
-    if (decision === 'CLIENT_WINS') {
-      await this.payments.refundEscrow(
-        dispute.serviceOrderId,
-      );
-    }
+    dispute.status = 'UNDER_REVIEW';
+    dispute.updatedAt = new Date();
 
-    if (decision === 'PROFESSIONAL_WINS') {
-      await this.payments.releasePayment(
-        dispute.serviceOrderId,
-      );
-    }
-
-    if (decision === 'PARTIAL_REFUND') {
-      await this.payments.partialRefund(
-        dispute.serviceOrderId,
-      );
-    }
-
-    return updated;
+    return dispute;
   }
 
-  // 🔥 ADMIN FORCE OVERRIDE
-  async forceResolve(
-    id: string,
-    body: {
-      decision: string;
-    },
-  ) {
-    return this.prisma.dispute.update({
-      where: {
-        id,
-      },
-      data: {
-        status: 'RESOLVED',
-        resolution: body.decision,
-        resolvedAt: new Date(),
-      },
+  addProfessionalEvidence(id: string, data: any) {
+    const dispute = this.findOne(id);
+
+    if (!dispute) {
+      return {
+        error: 'DISPUTE_NOT_FOUND',
+      };
+    }
+
+    dispute.evidences.push({
+      author: 'PROFESSIONAL',
+      message: data?.message ?? '',
+      createdAt: new Date(),
     });
+
+    dispute.status = 'UNDER_REVIEW';
+    dispute.updatedAt = new Date();
+
+    return dispute;
+  }
+
+  resolve(id: string, data: any) {
+    const dispute = this.findOne(id);
+
+    if (!dispute) {
+      return {
+        error: 'DISPUTE_NOT_FOUND',
+      };
+    }
+
+    const resolution = data?.resolution ?? 'PARTIAL_REFUND';
+
+    dispute.status = 'RESOLVED';
+    dispute.resolution = resolution;
+
+    if (resolution === 'FULL_REFUND') {
+      dispute.refundedAmount = dispute.escrowAmount;
+      dispute.releasedAmount = 0;
+    }
+
+    if (resolution === 'PARTIAL_REFUND') {
+      dispute.refundedAmount = dispute.escrowAmount * 0.5;
+      dispute.releasedAmount = dispute.escrowAmount * 0.5;
+    }
+
+    if (resolution === 'RELEASE_PAYMENT') {
+      dispute.refundedAmount = 0;
+      dispute.releasedAmount = dispute.escrowAmount;
+    }
+
+    dispute.aiAnalysis =
+      data?.aiAnalysis ??
+      'Analise automatica concluida pela IA do BoraServico.';
+
+    dispute.updatedAt = new Date();
+
+    return dispute;
+  }
+
+  override(id: string, data: any) {
+    const dispute = this.findOne(id);
+
+    if (!dispute) {
+      return {
+        error: 'DISPUTE_NOT_FOUND',
+      };
+    }
+
+    dispute.status = 'OVERRIDDEN';
+    dispute.resolution = data?.resolution ?? dispute.resolution;
+    dispute.updatedAt = new Date();
+
+    return dispute;
   }
 }

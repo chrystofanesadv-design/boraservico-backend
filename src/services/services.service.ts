@@ -5,22 +5,37 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 @Injectable()
 export class ServicesService {
   constructor(
-    private prisma: PrismaService,
-    private eventEmitter: EventEmitter2,
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(data: any) {
     const service = await this.prisma.serviceOrder.create({
-      data,
+      data: {
+        title: data.title ?? data.name ?? 'Serviço sem título',
+        description: data.description ?? '',
+        price: data.price ? Number(data.price) : data.budget ? Number(data.budget) : 0,
+        client: {
+          connect: {
+            id: data.clientId,
+          },
+        },
+      },
     });
 
-    // 🔥 DISPARA MATCHING AUTOMÁTICO
     this.eventEmitter.emit('service.created', service);
 
     return service;
   }
 
-  findAll() {
-    return this.prisma.serviceOrder.findMany();
+  async findAll() {
+    return this.prisma.serviceOrder.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        client: true,
+      },
+    });
   }
 }

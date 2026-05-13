@@ -1,18 +1,11 @@
-import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 
+import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { FraudService } from '../security/fraud.service';
 
 @Module({
-  providers: [
-    PaymentsService,
-    PrismaService,
-    FraudService,
-  ],
-
-  exports: [
-    PaymentsService,
-  ],
+  controllers: [PaymentsController],
+  providers: [PaymentsService],
+  exports: [PaymentsService],
 })
 export class PaymentsModule {}
