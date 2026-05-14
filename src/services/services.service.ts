@@ -14,7 +14,11 @@ export class ServicesService {
       data: {
         title: data.title ?? data.name ?? 'Serviço sem título',
         description: data.description ?? '',
-        price: data.price ? Number(data.price) : data.budget ? Number(data.budget) : 0,
+        price: data.price
+          ? Number(data.price)
+          : data.budget
+            ? Number(data.budget)
+            : 0,
         client: {
           connect: {
             id: data.clientId,
@@ -34,7 +38,16 @@ export class ServicesService {
         createdAt: 'desc',
       },
       include: {
-        client: true,
+        client: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            createdAt: true,
+            fcmToken: true,
+          },
+        },
       },
     });
   }
