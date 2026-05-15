@@ -1,18 +1,16 @@
-import { NestFactory } from '@nestjs/core';
+﻿import { NestFactory } from '@nestjs/core';
+import helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   try {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-    // ✅ CORS liberado para Flutter/Web
-    app.enableCors({
-      origin: true,
-      credentials: true,
-    });
+    app.use(helmet());
 
-    // ✅ Validação global
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -21,34 +19,26 @@ async function bootstrap() {
       }),
     );
 
-    // ✅ Health check Railway
-    app.getHttpAdapter().get('/', (_req, res) => {
-      res.status(200).json({
-        status: 'ok',
-        message: 'BoraServico API ONLINE 🚀',
-      });
+    app.enableCors({
+      origin: '*',
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+      allowedHeaders: 'Content-Type, Authorization',
     });
 
-    // ✅ Health endpoint
-    app.getHttpAdapter().get('/health', (_req, res) => {
-      res.status(200).json({
-        status: 'ok',
-        app: 'BoraServico Backend',
-        timestamp: new Date().toISOString(),
-      });
+    app.useStaticAssets(join(process.cwd(), 'uploads'), {
+      prefix: '/uploads/',
     });
 
-    // ✅ Porta dinâmica Railway
-    const port = Number(process.env.PORT) || 8080;
+    const port = process.env.PORT || 3000;
 
-    // ✅ Bind obrigatório Railway
-    await app.listen(port, '0.0.0.0');
+    await app.listen(port);
 
-    console.log(`🚀 API ONLINE NA PORTA ${port}`);
+    console.log(`ðŸš€ API ONLINE NA PORTA ${port}`);
   } catch (error) {
-    console.error('❌ ERRO AO INICIAR API:', error);
+    console.error('âŒ ERRO AO INICIAR API:', error);
     process.exit(1);
   }
 }
 
 bootstrap();
+

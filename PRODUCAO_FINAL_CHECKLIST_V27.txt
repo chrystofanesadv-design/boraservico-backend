@@ -1,0 +1,12 @@
+﻿CHECKLIST PRODUCAO FINAL:
+
+- remover console.log debug
+- remover textos mock
+- revisar permissÃµes Android
+- revisar timeout requests
+- revisar variÃ¡veis .env
+- validar websocket render
+- configurar Firebase Admin real
+- configurar provider pagamento real
+- revisar splash/logo final
+- revisar package name final

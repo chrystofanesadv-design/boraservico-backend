@@ -1,0 +1,44 @@
+﻿# INDICES RECOMENDADOS PARA O PRISMA
+
+Aplique manualmente no prisma/schema.prisma conforme os models existentes.
+
+Exemplos:
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  role      String
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([role])
+  @@index([createdAt])
+}
+
+model ServiceOrder {
+  id             String   @id @default(uuid())
+  clientId       String
+  professionalId String?
+  status         String
+  createdAt      DateTime @default(now())
+
+  @@index([clientId])
+  @@index([professionalId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  read      Boolean
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+IMPORTANTE:
+- NÃ£o apliquei automaticamente para evitar quebrar nomes reais do schema.
+- PrÃ³ximo pacote pode ler o schema e aplicar se vocÃª enviar/confirmar o conteÃºdo.

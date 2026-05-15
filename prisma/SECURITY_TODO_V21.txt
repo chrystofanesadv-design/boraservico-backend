@@ -1,0 +1,7 @@
+﻿PENDENTE V22:
+- Aplicar indices reais no prisma/schema.prisma conforme modelos existentes.
+- Implementar storage privado com autorizacao por usuario/ordem.
+- Implementar webhook pagamento com assinatura/validaÃ§Ã£o de provider.
+- Implementar antifraude com regras reais.
+- Implementar admin guard em rotas sensiveis.
+- RLS nativo nÃ£o Ã© padrÃ£o via Prisma; estratÃ©gia recomendada: authorization layer + policies por service + Ã­ndices no banco.
