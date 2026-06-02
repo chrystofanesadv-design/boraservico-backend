@@ -40,5 +40,5 @@ model Notification {
 }
 
 IMPORTANTE:
-- NÃ£o apliquei automaticamente para evitar quebrar nomes reais do schema.
-- PrÃ³ximo pacote pode ler o schema e aplicar se vocÃª enviar/confirmar o conteÃºdo.
+- Não apliquei automaticamente para evitar quebrar nomes reais do schema.
+- Próximo pacote pode ler o schema e aplicar se você enviar/confirmar o conteúdo.

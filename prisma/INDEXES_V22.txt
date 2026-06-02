@@ -5,4 +5,4 @@
 - @@index([professionalId])
 - @@index([email])
 
-Aplicar somente apÃ³s validar schema atual.
+Aplicar somente após validar schema atual.

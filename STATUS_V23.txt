@@ -4,8 +4,9 @@
 - Teste final backend V23 criado
 
 PENDENTE APOS V23:
-- Aplicar JwtGuard + AdminGuard nas rotas admin/sensiveis
+- Validar em Render se /health retorna productionReady=true com todas as envs reais configuradas
 - Aplicar indices reais no Prisma schema apÃ³s validaÃ§Ã£o visual do schema
-- Substituir mocks por credenciais reais: Firebase Admin, Mercado Pago/Pagar.me, Gemini/OpenAI
+- Substituir credenciais de teste por credenciais reais: Firebase Admin, Mercado Pago, Pagar.me, Gemini/OpenAI
 - Ligar 100% das telas Flutter premium aos services reais
+- Confirmar PLATFORM_COMMISSION_RATE=0.10 nos ambientes reais antes da publicacao
 - Build final APK/AAB somente depois dos testes consolidados

@@ -1,5 +1,9 @@
-﻿import { Body, Controller, Get, Post } from '@nestjs/common';
+﻿import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+
+import { getPublicEnvReadiness } from '../config/env';
 import { AuditService } from './audit.service';
+import { AdminGuard } from './admin.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 
 @Controller('security')
 export class SecurityController {
@@ -7,9 +11,13 @@ export class SecurityController {
 
   @Get()
   status() {
+    const env = getPublicEnvReadiness();
+
     return {
       success: true,
       module: 'security',
+      productionReady: env.productionReady,
+      env,
       features: {
         rateLimitReady: true,
         validationReady: true,
@@ -20,11 +28,13 @@ export class SecurityController {
     };
   }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get('audit')
   auditLogs() {
     return this.auditService.list();
   }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Post('audit')
   createAudit(@Body() body: any) {
     return this.auditService.register(body.action ?? 'MANUAL_AUDIT', body);
@@ -35,7 +45,7 @@ export class SecurityController {
     return {
       success: true,
       adminProtectedReady: true,
-      message: 'Admin guard criado. Proxima etapa: aplicar em rotas sensiveis.',
+      message: 'Admin guard e auditoria persistente ativos.',
     };
   }
 }

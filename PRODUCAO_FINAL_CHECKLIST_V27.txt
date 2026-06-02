@@ -1,12 +1,14 @@
 ﻿CHECKLIST PRODUCAO FINAL:
 
 - remover console.log debug
-- remover textos mock
+- remover textos de teste
 - revisar permissÃµes Android
 - revisar timeout requests
-- revisar variÃ¡veis .env
+- revisar variaveis .env obrigatorias via /health, /observability/health e /security
+- confirmar productionReady=true somente apos JWT_SECRET, DATABASE_URL, CORS_ORIGIN, Mercado Pago, Pagar.me, Firebase, Gemini, OpenAI e PLATFORM_COMMISSION_RATE=0.10
 - validar websocket render
 - configurar Firebase Admin real
-- configurar provider pagamento real
+- configurar Mercado Pago e Pagar.me reais com webhook secret e recebedor de repasse
+- confirmar comissao BoraServico 10% e repasse profissional 90% em checkout, split, wallet, relatorios e painel admin
 - revisar splash/logo final
 - revisar package name final

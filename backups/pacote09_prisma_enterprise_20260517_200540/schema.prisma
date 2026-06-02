@@ -1,0 +1,118 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  CLIENT
+  PROFESSIONAL
+  ADMIN
+}
+
+enum ServiceStatus {
+  CREATED
+  MATCHING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+  DISPUTED
+}
+
+enum EscrowStatus {
+  HELD
+  RELEASED
+  REFUNDED
+}
+
+enum DisputeStatus {
+  OPEN
+  CLIENT
+  PROFESSIONAL
+  RESOLVED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole
+  createdAt DateTime @default(now())
+
+  /// 🔥 OBRIGATÓRIO PARA PUSH NOTIFICATION (FCM)
+  fcmToken  String?
+
+  createdOrders     ServiceOrder[] @relation("ClientOrders")
+  acceptedOrders    ServiceOrder[] @relation("ProfessionalOrders")
+
+  wallet            Wallet?
+}
+
+model ServiceOrder {
+  id              String        @id @default(uuid())
+
+  clientId        String
+  client          User          @relation("ClientOrders", fields: [clientId], references: [id])
+
+  professionalId  String?
+  professional    User?         @relation("ProfessionalOrders", fields: [professionalId], references: [id])
+
+  status          ServiceStatus @default(CREATED)
+
+  title           String
+  description     String
+  price           Float
+
+  createdAt       DateTime @default(now())
+  acceptedAt      DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  escrow          Escrow?
+  dispute         Dispute?
+}
+
+model Wallet {
+  id        String  @id @default(uuid())
+  userId    String  @unique
+  balance   Float   @default(0)
+
+  user      User    @relation(fields: [userId], references: [id])
+}
+
+model Escrow {
+  id              String   @id @default(uuid())
+
+  serviceOrderId  String   @unique
+  serviceOrder    ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+
+  clientId        String
+  amount          Float
+  status          EscrowStatus @default(HELD)
+
+  createdAt       DateTime @default(now())
+  releasedAt      DateTime?
+}
+
+model Dispute {
+  id              String   @id @default(uuid())
+
+  serviceOrderId  String   @unique
+  serviceOrder    ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+
+  clientId        String
+  professionalId  String?
+
+  reason          String
+  status          DisputeStatus @default(OPEN)
+
+  resolution      String?
+
+  createdAt       DateTime @default(now())
+  resolvedAt      DateTime?
+}

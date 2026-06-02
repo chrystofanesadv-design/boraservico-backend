@@ -1,5 +1,6 @@
 ﻿import { Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
+import { getFirebasePrivateKey, readEnv } from '../config/env';
 
 @Injectable()
 export class PushService {
@@ -9,9 +10,9 @@ export class PushService {
   private initFirebase() {
     if (this.initialized) return;
 
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    const projectId = readEnv('FIREBASE_PROJECT_ID');
+    const clientEmail = readEnv('FIREBASE_CLIENT_EMAIL');
+    const privateKey = getFirebasePrivateKey();
 
     if (!projectId || !clientEmail || !privateKey) {
       this.initialized = false;
@@ -45,7 +46,8 @@ export class PushService {
   listTokens() {
     return Array.from(this.tokens.entries()).map(([userId, token]) => ({
       userId,
-      token,
+      tokenRegistered: Boolean(token),
+      tokenExposed: false,
     }));
   }
 
@@ -69,9 +71,9 @@ export class PushService {
     if (!this.initialized) {
       return {
         success: true,
-        mode: 'mock',
+        mode: 'clean-skip',
         message: 'Firebase Admin env vars not configured yet',
-        tokenPreview: token.substring(0, 20),
+        tokenExposed: false,
         title,
         body,
         data: data ?? {},

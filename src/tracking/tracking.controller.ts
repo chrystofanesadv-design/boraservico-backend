@@ -1,43 +1,51 @@
-﻿import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-} from '@nestjs/common';
+﻿import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 
+import { JwtAuthGuard } from '../auth/guards/jwt-auth/jwt-auth.guard';
 import { TrackingService } from './tracking.service';
 
 @Controller('tracking')
 export class TrackingController {
-  constructor(
-    private readonly trackingService: TrackingService,
-  ) {}
+  constructor(private readonly trackingService: TrackingService) {}
 
   @Get()
-  findAll(): any {
+  @UseGuards(JwtAuthGuard)
+  findAll() {
     return this.trackingService.findAll();
   }
 
   @Get(':orderId')
-  findByOrder(
-    @Param('orderId') orderId: string,
-  ): any {
+  @UseGuards(JwtAuthGuard)
+  findByOrder(@Param('orderId') orderId: string) {
     return this.trackingService.findByOrder(orderId);
   }
 
   @Post('check-in')
-  checkIn(@Body() body: any): any {
+  @UseGuards(JwtAuthGuard)
+  checkIn(@Body() body: any) {
     return this.trackingService.checkIn(body);
   }
 
+  @Post('start-displacement')
+  @UseGuards(JwtAuthGuard)
+  startDisplacement(@Body() body: any) {
+    return this.trackingService.startDisplacement(body);
+  }
+
   @Post('location')
-  location(@Body() body: any): any {
+  @UseGuards(JwtAuthGuard)
+  location(@Body() body: any) {
     return this.trackingService.location(body);
   }
 
+  @Post('route')
+  @UseGuards(JwtAuthGuard)
+  route(@Body() body: any) {
+    return this.trackingService.route(body);
+  }
+
   @Post('check-out')
-  checkOut(@Body() body: any): any {
+  @UseGuards(JwtAuthGuard)
+  checkOut(@Body() body: any) {
     return this.trackingService.checkOut(body);
   }
 }

@@ -1,4 +1,13 @@
-﻿import { PaymentsProviderModule } from './payments-provider/payments-provider.module';
+﻿import { LatamReadyEnterpriseModule } from './latam-ready-enterprise/latam-ready-enterprise.module';
+import { FinanceEnterpriseModule } from './finance-enterprise/finance-enterprise.module';
+import { UploadPremiumModule } from './upload-premium/upload-premium.module';
+import { FraudEnterpriseModule } from './fraud-enterprise/fraud-enterprise.module';
+import { ProfessionalTeamsModule } from './professional-teams/professional-teams.module';
+import { ProfessionalProfileModule } from './professional-profile/professional-profile.module';
+import { DealAiModule } from './deal-ai/deal-ai.module';
+import { ScopeBudgetModule } from './scope-budget/scope-budget.module';
+import { AvailabilityModule } from './availability/availability.module';
+import { PaymentsProviderModule } from './payments-provider/payments-provider.module';
 import { AiProviderModule } from './ai-provider/ai-provider.module';
 import { RealtimeFinalModule } from './realtime-final/realtime-final.module';
 import { PushRealModule } from './push-real/push-real.module';
@@ -8,7 +17,15 @@ import { PrivateStorageModule } from './private-storage/private-storage.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { FraudModule } from './fraud/fraud.module';
 import { Module } from '@nestjs/common';
+import { GrowthAiEnterpriseModule } from './growth-ai-enterprise/growth-ai-enterprise.module';
+import { VoiceTranslationEnterpriseModule } from './voice-translation-enterprise/voice-translation-enterprise.module';
+import { ContactIntelligenceModule } from './contact-intelligence/contact-intelligence.module';
+import { TrackingPremiumModule } from './tracking-premium/tracking-premium.module';
+import { ReferralPremiumModule } from './referral-premium/referral-premium.module';
+import { PushPremiumModule } from './push-premium/push-premium.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { UploadModule } from './upload/upload.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { PushModule } from './push/push.module';
@@ -36,9 +53,25 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { TimelineModule } from './timeline/timeline.module';
 import { ChatModule } from './chat/chat.module';
+import { NegotiationsModule } from './negotiations/negotiations.module';
+import { VoiceModule } from './voice/voice.module';
 
 @Module({
   imports: [
+    GrowthAiEnterpriseModule,
+    VoiceTranslationEnterpriseModule,
+    ContactIntelligenceModule,
+    FinanceEnterpriseModule,
+    LatamReadyEnterpriseModule,TrackingPremiumModule, 
+    ReferralPremiumModule,
+    PushPremiumModule,
+    FraudEnterpriseModule,ProfessionalTeamsModule, ProfessionalProfileModule, 
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      envFilePath: ['.env'],
+      ignoreEnvFile: process.env.NODE_ENV === 'production',
+    }),
     AiProviderModule,
     PaymentsProviderModule,
     RealtimeFinalModule,
@@ -55,15 +88,15 @@ import { ChatModule } from './chat/chat.module';
     PushModule,
     RealtimeModule,
     UploadModule,
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-
+    UploadPremiumModule,
     EventEmitterModule.forRoot(),
 
     PrismaModule,
     AuthModule,
     UsersModule,
+    AvailabilityModule,
+    ScopeBudgetModule,
+    DealAiModule,
     ServicesModule,
     MatchingModule,
     PaymentsModule,
@@ -79,12 +112,33 @@ import { ChatModule } from './chat/chat.module';
     ObservabilityModule,
     TimelineModule,
     ChatModule,
+    NegotiationsModule,
+    VoiceModule,
   ],
 
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -39,7 +39,7 @@ export class PaymentsService {
 
   createEscrow(data: any) {
     const amount = Number(data?.amount ?? 0);
-    const platformFee = amount * 0.12;
+    const platformFee = amount * 0.10;
     const professionalAmount = amount - platformFee;
 
     const payment: PaymentMock = {

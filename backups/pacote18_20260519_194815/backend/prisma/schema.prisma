@@ -1,0 +1,483 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  CLIENT
+  PROFESSIONAL
+  ADMIN
+}
+
+enum ServiceStatus {
+  CREATED
+  MATCHING
+  ACCEPTED
+  IN_PROGRESS
+  CHECKED_IN
+  CHECKED_OUT
+  COMPLETED
+  CANCELED
+  CANCELLED
+  DISPUTED
+}
+
+enum EscrowStatus {
+  HELD
+  RELEASED
+  REFUNDED
+}
+
+enum DisputeStatus {
+  OPEN
+  CLIENT
+  PROFESSIONAL
+  RESOLVED
+}
+
+enum TrackingEventStatus {
+  WAITING
+  CHECKED_IN
+  IN_PROGRESS
+  CHECKED_OUT
+  COMPLETED
+  CANCELLED
+}
+
+enum OperationalTimelineEventType {
+  CREATED
+  MATCHING_STARTED
+  PROFESSIONAL_ACCEPTED
+  PROFESSIONAL_ON_THE_WAY
+  CHECKED_IN
+  IN_PROGRESS
+  CHECKED_OUT
+  PROOF_UPLOADED
+  COMPLETED
+  PAYMENT_RELEASED
+  CANCELLED
+  DISPUTE_OPENED
+  RATING_REQUESTED
+}
+
+enum TimelineEventState {
+  COMPLETE
+  CURRENT
+  UPCOMING
+  ALERT
+}
+
+enum WalletTransactionType {
+  CREDIT
+  DEBIT
+  ESCROW_HOLD
+  ESCROW_RELEASE
+  ESCROW_REFUND
+  PAYMENT_RELEASE
+  REFERRAL_BONUS
+  PIX_WITHDRAWAL
+  ADJUSTMENT
+}
+
+enum WalletTransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum WalletTransactionSource {
+  ORDER
+  PAYMENT
+  ESCROW
+  REFERRAL
+  PIX
+  MANUAL
+  SYSTEM
+}
+
+enum ReferralStatus {
+  PHASE_1
+  PHASE_2
+  COMPLETED
+  CANCELLED
+}
+
+enum ProofVisibility {
+  PRIVATE
+  ORDER_PARTICIPANTS
+  SUPPORT
+  PUBLIC
+}
+
+enum ChatSenderRole {
+  CLIENT
+  PROFESSIONAL
+  SYSTEM
+  ADMIN
+}
+
+enum PaymentProvider {
+  MERCADO_PAGO
+  PAGARME
+  PIX
+  STRIPE
+  MANUAL
+  MOCK
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  PAID
+  ESCROW_HELD
+  RELEASED
+  REFUNDED
+  PARTIAL_REFUND
+  SPLIT_DONE
+  CANCELED
+  FAILED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole
+  createdAt DateTime @default(now())
+
+  /// 🔥 OBRIGATÓRIO PARA PUSH NOTIFICATION (FCM)
+  fcmToken  String?
+
+  createdOrders     ServiceOrder[] @relation("ClientOrders")
+  acceptedOrders    ServiceOrder[] @relation("ProfessionalOrders")
+
+  wallet            Wallet?
+  trackingEvents    TrackingEvent[] @relation("TrackingActor")
+  walletTransactions WalletTransaction[]
+  proofUploads      ProofUpload[]
+  reviewsWritten    Review[] @relation("ReviewsWritten")
+  reviewsReceived   Review[] @relation("ReviewsReceived")
+  referralsMade     Referral[] @relation("ReferralReferrer")
+  referralsReceived Referral[] @relation("ReferralReferred")
+  reputationProfile ReputationProfile?
+}
+
+model ServiceOrder {
+  id              String        @id @default(uuid())
+
+  clientId        String
+  client          User          @relation("ClientOrders", fields: [clientId], references: [id])
+
+  professionalId  String?
+  professional    User?         @relation("ProfessionalOrders", fields: [professionalId], references: [id])
+
+  status          ServiceStatus @default(CREATED)
+
+  category        String?
+  address         String?
+  title           String
+  description     String
+  price           Decimal       @default(0) @db.Decimal(12, 2)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  acceptedAt      DateTime?
+  startedAt       DateTime?
+  checkInAt       DateTime?
+  checkOutAt      DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+
+  escrow          Escrow?
+  dispute         Dispute?
+  trackingEvents  TrackingEvent[]
+  timelineEvents  OperationalTimelineEvent[]
+  walletTransactions WalletTransaction[]
+  proofUploads    ProofUpload[]
+  chatMessages    ChatMessage[]
+  reviews         Review[]
+  payments        Payment[]
+
+  @@index([clientId])
+  @@index([professionalId])
+  @@index([status])
+  @@index([category])
+}
+
+model Wallet {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  balance          Decimal  @default(0) @db.Decimal(12, 2)
+  escrowBalance    Decimal  @default(0) @db.Decimal(12, 2)
+  availableBalance Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user             User     @relation(fields: [userId], references: [id])
+}
+
+model Escrow {
+  id              String   @id @default(uuid())
+
+  serviceOrderId  String   @unique
+  serviceOrder    ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+
+  clientId        String
+  amount          Decimal  @db.Decimal(12, 2)
+  status          EscrowStatus @default(HELD)
+
+  createdAt       DateTime @default(now())
+  releasedAt      DateTime?
+}
+
+model Dispute {
+  id              String   @id @default(uuid())
+
+  serviceOrderId  String   @unique
+  serviceOrder    ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+
+  clientId        String
+  professionalId  String?
+
+  reason          String
+  status          DisputeStatus @default(OPEN)
+
+  resolution      String?
+
+  createdAt       DateTime @default(now())
+  resolvedAt      DateTime?
+}
+
+model TrackingEvent {
+  id        String              @id @default(uuid())
+  orderId   String
+  order     ServiceOrder        @relation(fields: [orderId], references: [id])
+  lat       Float
+  lng       Float
+  actorId   String?
+  actor     User?               @relation("TrackingActor", fields: [actorId], references: [id], onDelete: SetNull)
+  status    TrackingEventStatus
+  timestamp DateTime            @default(now())
+  metadata  Json?
+
+  @@index([orderId, timestamp])
+  @@index([actorId])
+}
+
+model OperationalTimelineEvent {
+  id          String                       @id @default(uuid())
+  orderId     String
+  order       ServiceOrder                 @relation(fields: [orderId], references: [id])
+  type        OperationalTimelineEventType
+  title       String
+  description String?
+  state       TimelineEventState           @default(CURRENT)
+  timestamp   DateTime                     @default(now())
+  metadata    Json?
+
+  @@index([orderId, timestamp])
+  @@index([type])
+}
+
+model WalletTransaction {
+  id              String                  @id @default(uuid())
+  userId          String
+  user            User                    @relation(fields: [userId], references: [id])
+  orderId         String?
+  order           ServiceOrder?           @relation(fields: [orderId], references: [id])
+  type            WalletTransactionType
+  amount          Decimal                 @db.Decimal(12, 2)
+  status          WalletTransactionStatus @default(COMPLETED)
+  source          WalletTransactionSource @default(SYSTEM)
+  metadata        Json?
+  timestamp       DateTime                @default(now())
+  referralBonus   ReferralBonus?
+
+  @@index([userId, timestamp])
+  @@index([orderId])
+  @@index([type])
+  @@index([source])
+}
+
+model Referral {
+  id              String         @id @default(uuid())
+  referrerId      String
+  referrer        User           @relation("ReferralReferrer", fields: [referrerId], references: [id])
+  referredUserId  String
+  referredUser    User           @relation("ReferralReferred", fields: [referredUserId], references: [id])
+  status          ReferralStatus @default(PHASE_1)
+
+  phase1StartAt   DateTime       @default(now())
+  phase1EndAt     DateTime
+  phase1Percent   Decimal        @default(0.05) @db.Decimal(5, 4)
+  phase1Limit     Decimal        @default(300) @db.Decimal(12, 2)
+  phase1Earned    Decimal        @default(0) @db.Decimal(12, 2)
+
+  phase2StartAt   DateTime?
+  phase2EndAt     DateTime?
+  phase2Percent   Decimal        @default(0.025) @db.Decimal(5, 4)
+  phase2Limit     Decimal        @default(200) @db.Decimal(12, 2)
+  phase2Earned    Decimal        @default(0) @db.Decimal(12, 2)
+
+  totalLimit      Decimal        @default(500) @db.Decimal(12, 2)
+  totalEarned     Decimal        @default(0) @db.Decimal(12, 2)
+  completedAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  bonuses         ReferralBonus[]
+
+  @@unique([referrerId, referredUserId])
+  @@index([referrerId, status])
+  @@index([referredUserId, status])
+}
+
+model ReferralBonus {
+  id                  String             @id @default(uuid())
+  referralId          String
+  referral            Referral           @relation(fields: [referralId], references: [id])
+  referrerId          String
+  referredUserId      String
+  orderId             String?
+  serviceValue        Decimal            @db.Decimal(12, 2)
+  phase               Int
+  percentage          Decimal            @db.Decimal(5, 4)
+  bonusAmount         Decimal            @db.Decimal(12, 2)
+  withdrawable        Boolean            @default(true)
+  walletTransactionId String?            @unique
+  walletTransaction   WalletTransaction? @relation(fields: [walletTransactionId], references: [id])
+  createdAt           DateTime           @default(now())
+
+  @@index([referralId])
+  @@index([referrerId])
+  @@index([orderId])
+}
+
+model ProofUpload {
+  id          String          @id @default(uuid())
+  orderId     String
+  order       ServiceOrder    @relation(fields: [orderId], references: [id])
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+  fileUrl     String
+  storageKey  String
+  visibility  ProofVisibility @default(ORDER_PARTICIPANTS)
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id         String         @id @default(uuid())
+  orderId    String
+  order      ServiceOrder   @relation(fields: [orderId], references: [id])
+  senderId   String
+  senderRole ChatSenderRole @default(SYSTEM)
+  message    String
+  readAt     DateTime?
+  createdAt  DateTime       @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([senderId])
+}
+
+model ReputationProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id])
+  averageRating     Float    @default(5)
+  totalReviews      Int      @default(0)
+  completedServices Int      @default(0)
+  cancelledServices Int      @default(0)
+  responseTimeScore Float    @default(100)
+  reliabilityScore  Float    @default(100)
+  reputationScore   Float    @default(100)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Review {
+  id         String       @id @default(uuid())
+  orderId    String
+  order      ServiceOrder @relation(fields: [orderId], references: [id])
+  reviewerId String
+  reviewer   User         @relation("ReviewsWritten", fields: [reviewerId], references: [id])
+  reviewedId String
+  reviewed   User         @relation("ReviewsReceived", fields: [reviewedId], references: [id])
+  rating     Int
+  comment    String?
+  createdAt  DateTime     @default(now())
+
+  @@unique([orderId, reviewerId, reviewedId])
+  @@index([reviewedId, createdAt])
+}
+
+model Payment {
+  id                String          @id @default(uuid())
+  orderId           String
+  order             ServiceOrder    @relation(fields: [orderId], references: [id])
+  provider          PaymentProvider @default(MERCADO_PAGO)
+  providerPaymentId String?
+  status            PaymentStatus   @default(PENDING)
+  amount            Decimal         @db.Decimal(12, 2)
+  commission        Decimal         @default(0) @db.Decimal(12, 2)
+  escrowStatus      EscrowStatus    @default(HELD)
+  metadata          Json?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  paidAt            DateTime?
+  releasedAt        DateTime?
+  refundedAt        DateTime?
+
+  audits            PaymentAudit[]
+  webhookEvents     PaymentWebhookEvent[]
+
+  @@index([orderId])
+  @@index([provider, providerPaymentId])
+  @@index([status])
+  @@index([escrowStatus])
+}
+
+model PaymentAudit {
+  id          String           @id @default(uuid())
+  paymentId   String?
+  payment     Payment?         @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  orderId     String?
+  provider    PaymentProvider?
+  action      String
+  status      PaymentStatus?
+  amount      Decimal?         @db.Decimal(12, 2)
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+
+  @@index([paymentId, createdAt])
+  @@index([orderId, createdAt])
+  @@index([action])
+}
+
+model PaymentWebhookEvent {
+  id                String           @id @default(uuid())
+  provider          PaymentProvider
+  providerEventId   String
+  providerPaymentId String?
+  paymentId         String?
+  payment           Payment?         @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  signatureDigest   String?
+  status            String           @default("PROCESSED")
+  payload           Json?
+  processedAt       DateTime?
+  createdAt         DateTime         @default(now())
+
+  @@unique([provider, providerEventId])
+  @@index([provider, providerPaymentId])
+  @@index([paymentId])
+  @@index([status])
+}

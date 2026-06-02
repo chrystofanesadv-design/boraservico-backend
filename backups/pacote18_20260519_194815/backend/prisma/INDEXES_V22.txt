@@ -1,0 +1,8 @@
+﻿PENDENTE:
+- @@index([status])
+- @@index([createdAt])
+- @@index([clientId])
+- @@index([professionalId])
+- @@index([email])
+
+Aplicar somente apÃ³s validar schema atual.

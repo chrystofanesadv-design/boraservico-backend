@@ -43,33 +43,20 @@ export class AiService {
   price(data: any) {
     const category = `${data?.category ?? ''}`.toLowerCase();
 
-    let suggestedPrice = 100;
-
-    if (category === 'eletrica') {
-      suggestedPrice = 180;
-    }
-
-    else if (category === 'limpeza') {
-      suggestedPrice = 120;
-    }
-
-    else if (category === 'hidraulica') {
-      suggestedPrice = 220;
-    }
-
-    const urgencyMultiplier =
-      data?.urgent === true ? 1.5 : 1;
-
-    suggestedPrice =
-      suggestedPrice * urgencyMultiplier;
-
     return {
       success: true,
       category,
       urgent: data?.urgent ?? false,
-      suggestedPrice,
-      minimumPrice: suggestedPrice * 0.8,
-      maximumPrice: suggestedPrice * 1.4,
+      pricingDisabled: true,
+      noPricePolicy: true,
+      message:
+        'A IA do BoraServico nao define preco nem gera orcamento automatico. O valor deve ser enviado pelo profissional e negociado pelo cliente.',
+      allowedActions: [
+        'organizar briefing',
+        'sugerir perguntas',
+        'comparar propostas reais',
+        'detectar inconsistencias',
+      ],
       analyzedAt: new Date(),
     };
   }
