@@ -8,27 +8,30 @@ datasource db {
 }
 
 // ============================================
-// ENUMS convertidos para String
+// ENUMS mantidos para compatibilidade com banco Render existente
 // ============================================
 
-// UserRole: CLIENT, PROFESSIONAL, ADMIN
-// ServiceStatus: CREATED, MATCHING, ACCEPTED, IN_PROGRESS, CHECKED_IN, CHECKED_OUT, COMPLETED, CANCELED, CANCELLED, DISPUTED
-// EscrowStatus: HELD, RELEASED, REFUNDED
-// DisputeStatus: OPEN, CLIENT, PROFESSIONAL, RESOLVED
-// TrackingEventStatus: WAITING, CHECKED_IN, IN_PROGRESS, CHECKED_OUT, COMPLETED, CANCELLED
-// OperationalTimelineEventType: CREATED, MATCHING_STARTED, PROFESSIONAL_ACCEPTED, PROFESSIONAL_ON_THE_WAY, CHECKED_IN, IN_PROGRESS, CHECKED_OUT, PROOF_UPLOADED, COMPLETED, PAYMENT_RELEASED, CANCELLED, DISPUTE_OPENED, RATING_REQUESTED
-// TimelineEventState: COMPLETE, CURRENT, UPCOMING, ALERT
-// WalletTransactionType: CREDIT, DEBIT, ESCROW_HOLD, ESCROW_RELEASE, ESCROW_REFUND, PAYMENT_RELEASE, REFERRAL_BONUS, PIX_WITHDRAWAL, ADJUSTMENT
-// WalletTransactionStatus: PENDING, COMPLETED, FAILED, CANCELLED
-// WalletTransactionSource: ORDER, PAYMENT, ESCROW, REFERRAL, PIX, MANUAL, SYSTEM
-// ReferralStatus: PHASE_1, PHASE_2, COMPLETED, CANCELLED
-// ProofVisibility: PRIVATE, ORDER_PARTICIPANTS, SUPPORT, PUBLIC
-// ChatSenderRole: CLIENT, PROFESSIONAL, SYSTEM, ADMIN
-// PaymentProvider: MERCADO_PAGO, PAGARME, PIX, STRIPE, MANUAL, MOCK
-// PaymentStatus: PENDING, AUTHORIZED, PAID, ESCROW_HELD, RELEASED, REFUNDED, PARTIAL_REFUND, SPLIT_DONE, CANCELED, FAILED
+enum UserRole {
+  CLIENT
+  PROFESSIONAL
+  ADMIN
+}
+
+enum ServiceStatus {
+  CREATED
+  MATCHING
+  ACCEPTED
+  IN_PROGRESS
+  CHECKED_IN
+  CHECKED_OUT
+  COMPLETED
+  CANCELED
+  CANCELLED
+  DISPUTED
+}
 
 // ============================================
-// MODELOS
+// ENUMS internos restantes continuam como String
 // ============================================
 
 model User {
@@ -36,26 +39,26 @@ model User {
   email     String   @unique
   password  String
   name      String
-  role      String   @default("CLIENT")
+  role      UserRole @default(CLIENT)
   createdAt DateTime @default(now())
 
-  /// ðŸ”¥ OBRIGATÃ“RIO PARA PUSH NOTIFICATION (FCM)
+  /// OBRIGATORIO PARA PUSH NOTIFICATION (FCM)
   fcmToken  String?
 
-  createdOrders     ServiceOrder[] @relation("ClientOrders")
-  acceptedOrders    ServiceOrder[] @relation("ProfessionalOrders")
-  requestForQuotes  RequestForQuote[] @relation("ClientRequestForQuotes")
+  createdOrders      ServiceOrder[] @relation("ClientOrders")
+  acceptedOrders     ServiceOrder[] @relation("ProfessionalOrders")
+  requestForQuotes   RequestForQuote[] @relation("ClientRequestForQuotes")
 
-  wallet            Wallet?
-  trackingEvents    TrackingEvent[] @relation("TrackingActor")
+  wallet             Wallet?
+  trackingEvents     TrackingEvent[] @relation("TrackingActor")
   walletTransactions WalletTransaction[]
-  proofUploads      ProofUpload[]
-  reviewsWritten    Review[] @relation("ReviewsWritten")
-  reviewsReceived   Review[] @relation("ReviewsReceived")
-  referralsMade     Referral[] @relation("ReferralReferrer")
-  referralsReceived Referral[] @relation("ReferralReferred")
-  reputationProfile ReputationProfile?
-  paymentRecipients PaymentRecipient[]
+  proofUploads       ProofUpload[]
+  reviewsWritten     Review[] @relation("ReviewsWritten")
+  reviewsReceived    Review[] @relation("ReviewsReceived")
+  referralsMade      Referral[] @relation("ReferralReferrer")
+  referralsReceived  Referral[] @relation("ReferralReferred")
+  reputationProfile  ReputationProfile?
+  paymentRecipients  PaymentRecipient[]
 }
 
 model ServiceOrder {
@@ -67,7 +70,7 @@ model ServiceOrder {
   professionalId  String?
   professional    User?    @relation("ProfessionalOrders", fields: [professionalId], references: [id])
 
-  status          String   @default("CREATED")
+  status          ServiceStatus @default(CREATED)
 
   category        String?
   address         String?
@@ -86,13 +89,13 @@ model ServiceOrder {
 
   escrow          Escrow?
   dispute         Dispute?
-  trackingEvents TrackingEvent[]
-  timelineEvents OperationalTimelineEvent[]
+  trackingEvents  TrackingEvent[]
+  timelineEvents  OperationalTimelineEvent[]
   walletTransactions WalletTransaction[]
-  proofUploads   ProofUpload[]
-  chatMessages   ChatMessage[]
-  reviews        Review[]
-  payments       Payment[]
+  proofUploads    ProofUpload[]
+  chatMessages    ChatMessage[]
+  reviews         Review[]
+  payments        Payment[]
   acceptedRequestForQuote RequestForQuote? @relation("RequestAcceptedOrder")
   acceptedNegotiation     Negotiation?     @relation("NegotiationAcceptedOrder")
 
@@ -133,29 +136,29 @@ model RequestForQuote {
 }
 
 model Negotiation {
-  id              String   @id @default(uuid())
-  requestId       String
-  request         RequestForQuote @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  acceptedOrderId String?  @unique
-  acceptedOrder   ServiceOrder? @relation("NegotiationAcceptedOrder", fields: [acceptedOrderId], references: [id])
+  id               String   @id @default(uuid())
+  requestId        String
+  request          RequestForQuote @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  acceptedOrderId  String?  @unique
+  acceptedOrder    ServiceOrder? @relation("NegotiationAcceptedOrder", fields: [acceptedOrderId], references: [id])
 
-  clientId        String
-  professionalId  String
+  clientId         String
+  professionalId   String
   professionalName String
-  status          String   @default("OPEN")
-  rating          Float?
-  distanceKm      Float?
-  responseMinutes Int?
-  score           Float?
-  metadata        String?
+  status           String   @default("OPEN")
+  rating           Float?
+  distanceKm       Float?
+  responseMinutes  Int?
+  score            Float?
+  metadata         String?
 
-  quotes          Quote[]
-  counterOffers   CounterOffer[]
-  finalOffers     FinalOffer[]
-  events          NegotiationEvent[]
+  quotes           Quote[]
+  counterOffers    CounterOffer[]
+  finalOffers      FinalOffer[]
+  events           NegotiationEvent[]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @default(now()) @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
 
   @@unique([requestId, professionalId])
   @@index([requestId, status])
@@ -164,18 +167,18 @@ model Negotiation {
 }
 
 model Quote {
-  id              String   @id @default(uuid())
-  negotiationId   String
-  negotiation     Negotiation @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
-  professionalId  String
-  amount          Float
-  deadline        String?
-  notes           String?
-  includes        String?
-  excludes        String?
+  id               String   @id @default(uuid())
+  negotiationId    String
+  negotiation      Negotiation @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+  professionalId   String
+  amount           Float
+  deadline         String?
+  notes            String?
+  includes         String?
+  excludes         String?
   materialIncluded Boolean @default(false)
-  etaMinutes      Int?
-  createdAt       DateTime @default(now())
+  etaMinutes       Int?
+  createdAt        DateTime @default(now())
 
   @@index([negotiationId, createdAt])
   @@index([professionalId, createdAt])
@@ -230,7 +233,7 @@ model Wallet {
   escrowBalance    Float    @default(0)
   availableBalance Float    @default(0)
   createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  updatedAt        DateTime @default(now()) @updatedAt
 
   user             User     @relation(fields: [userId], references: [id])
 }
@@ -239,7 +242,7 @@ model Escrow {
   id              String   @id @default(uuid())
 
   serviceOrderId  String   @unique
-  serviceOrder     ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+  serviceOrder    ServiceOrder @relation(fields: [serviceOrderId], references: [id])
 
   clientId        String
   amount          Float
@@ -429,7 +432,7 @@ model ReputationProfile {
   reliabilityScore  Float    @default(100)
   reputationScore   Float    @default(100)
   createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  updatedAt         DateTime @default(now()) @updatedAt
 }
 
 model Review {
@@ -460,7 +463,7 @@ model Payment {
   escrowStatus      String   @default("HELD")
   metadata          String?
   createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  updatedAt         DateTime @default(now()) @updatedAt
   paidAt            DateTime?
   releasedAt        DateTime?
   refundedAt        DateTime?
@@ -519,11 +522,10 @@ model PaymentRecipient {
   status              String?
   metadata            String?
   createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  updatedAt           DateTime @default(now()) @updatedAt
 
   @@unique([userId, provider])
   @@unique([provider, providerRecipientId])
   @@index([userId])
   @@index([provider])
 }
-
