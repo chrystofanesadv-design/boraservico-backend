@@ -1,4 +1,4 @@
-generator client {
+﻿generator client {
   provider = "prisma-client-js"
 }
 
@@ -526,3 +526,4 @@ model PaymentRecipient {
   @@index([userId])
   @@index([provider])
 }
+
