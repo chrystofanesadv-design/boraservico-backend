@@ -1,3 +1,4 @@
+import { RoutesDebugController } from './routes-debug.controller';
 import { LatamReadyEnterpriseModule } from './latam-ready-enterprise/latam-ready-enterprise.module';
 import { FinanceEnterpriseModule } from './finance-enterprise/finance-enterprise.module';
 import { UploadPremiumModule } from './upload-premium/upload-premium.module';
@@ -116,7 +117,7 @@ import { VoiceModule } from './voice/voice.module';
     VoiceModule,
   ],
 
-  controllers: [],
+  controllers: [RoutesDebugController, ],
   providers: [
     {
       provide: APP_GUARD,
