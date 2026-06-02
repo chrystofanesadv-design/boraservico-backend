@@ -1,4 +1,4 @@
-﻿import { LatamReadyEnterpriseModule } from './latam-ready-enterprise/latam-ready-enterprise.module';
+import { LatamReadyEnterpriseModule } from './latam-ready-enterprise/latam-ready-enterprise.module';
 import { FinanceEnterpriseModule } from './finance-enterprise/finance-enterprise.module';
 import { UploadPremiumModule } from './upload-premium/upload-premium.module';
 import { FraudEnterpriseModule } from './fraud-enterprise/fraud-enterprise.module';
