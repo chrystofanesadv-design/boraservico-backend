@@ -39,7 +39,7 @@ model User {
   role      String   @default("CLIENT")
   createdAt DateTime @default(now())
 
-  /// 🔥 OBRIGATÓRIO PARA PUSH NOTIFICATION (FCM)
+  /// ðŸ”¥ OBRIGATÃ“RIO PARA PUSH NOTIFICATION (FCM)
   fcmToken  String?
 
   createdOrders     ServiceOrder[] @relation("ClientOrders")
@@ -76,7 +76,7 @@ model ServiceOrder {
   price           Float    @default(0)
 
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  updatedAt       DateTime @default(now()) @updatedAt
   acceptedAt      DateTime?
   startedAt       DateTime?
   checkInAt       DateTime?
@@ -125,7 +125,7 @@ model RequestForQuote {
   negotiations    Negotiation[]
 
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  updatedAt       DateTime @default(now()) @updatedAt
 
   @@index([clientId, createdAt])
   @@index([status])
@@ -155,7 +155,7 @@ model Negotiation {
   events          NegotiationEvent[]
 
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  updatedAt       DateTime @default(now()) @updatedAt
 
   @@unique([requestId, professionalId])
   @@index([requestId, status])
@@ -355,7 +355,7 @@ model Referral {
   totalEarned     Float    @default(0)
   completedAt     DateTime?
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  updatedAt       DateTime @default(now()) @updatedAt
 
   bonuses         ReferralBonus[]
 
