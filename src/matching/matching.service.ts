@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -556,7 +556,7 @@ export class MatchingService {
     const users = await this.prisma.user.findMany({
       where: {
         role: {
-          in: ['PROFESSIONAL', 'PROFISSIONAL', 'PROVIDER', 'PRESTADOR'],
+          in: ['PROFESSIONAL'],
         },
       },
       take: 200,
@@ -1305,3 +1305,5 @@ export class MatchingService {
     return Math.max(min, Math.min(max, value));
   }
 }
+
+

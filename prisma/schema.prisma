@@ -24,10 +24,12 @@ enum ServiceStatus {
   IN_PROGRESS
   CHECKED_IN
   CHECKED_OUT
+  WAITING_CLIENT_CONFIRMATION
   COMPLETED
   CANCELED
   CANCELLED
   DISPUTED
+  DISPUTE_RESOLVED_CLIENT_REFUND
 }
 
 // ============================================
@@ -529,3 +531,4 @@ model PaymentRecipient {
   @@index([userId])
   @@index([provider])
 }
+
