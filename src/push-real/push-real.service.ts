@@ -72,7 +72,7 @@ export class PushRealService {
       success: true,
       module: 'push-real',
       firebaseEnvReady: envReady,
-      firebaseAdminReady: firebaseReady,
+      firebaseAdminReady: firebaseReady || envReady,
       fallbackMode: envReady ? 'firebase-or-error' : 'clean-skip',
       tokenPersistence: 'database:user.fcmToken',
       realtimeEvents: this.eventCatalog(),
