@@ -1,4 +1,4 @@
-﻿import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 
 import { getPublicEnvReadiness } from '../config/env';
 import { AuditService } from './audit.service';

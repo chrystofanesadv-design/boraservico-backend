@@ -1,4 +1,4 @@
-﻿import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { UploadPremiumCreateDto, UploadPremiumEvidenceDto, UploadPremiumOcrDto, UploadPremiumKind, UploadPremiumVisibility } from './upload-premium.dto';
 
 export interface UploadPremiumRecord {

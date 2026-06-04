@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { LatamReadyEnterpriseController } from './latam-ready-enterprise.controller';
 import { LatamReadyEnterpriseService } from './latam-ready-enterprise.service';
 

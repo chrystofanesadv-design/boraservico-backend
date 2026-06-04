@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FraudCheckDto } from './dto/fraud-check.dto';
 
 type FraudSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';

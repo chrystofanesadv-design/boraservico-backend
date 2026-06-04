@@ -1,4 +1,4 @@
-﻿export type TrackingMissionStatus =
+export type TrackingMissionStatus =
   | 'WAITING_PAYMENT'
   | 'PAYMENT_PROTECTED'
   | 'PROFESSIONAL_ON_THE_WAY'

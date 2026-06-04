@@ -1,4 +1,4 @@
-﻿import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 
 import { getFirebasePrivateKey, readEnv } from '../config/env';

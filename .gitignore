@@ -58,3 +58,16 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 /generated/prisma
 
 backups/
+# BoraServico generated/heavy files
+node_modules/
+dist/
+coverage/
+.turbo/
+.cache/
+*.bak
+*.backup
+*.tmp
+.env.*.local
+storage/private/
+storage/tmp/
+uploads/tmp/

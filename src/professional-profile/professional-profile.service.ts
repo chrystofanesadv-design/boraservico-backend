@@ -1,4 +1,4 @@
-﻿type VerificationStatus = 'not_requested' | 'pending' | 'verified' | 'rejected';
+type VerificationStatus = 'not_requested' | 'pending' | 'verified' | 'rejected';
 
 type ProfessionalProfile = {
   professionalId: string;

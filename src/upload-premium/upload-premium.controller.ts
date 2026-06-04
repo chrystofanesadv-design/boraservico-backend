@@ -1,4 +1,4 @@
-﻿import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { UploadPremiumCreateDto, UploadPremiumEvidenceDto, UploadPremiumOcrDto } from './upload-premium.dto';
 import type { UploadPremiumEvidenceRecord, UploadPremiumOcrResult, UploadPremiumRecord } from './upload-premium.service';
 import { UploadPremiumService } from './upload-premium.service';

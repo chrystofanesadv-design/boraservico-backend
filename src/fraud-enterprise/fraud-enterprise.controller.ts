@@ -1,4 +1,4 @@
-﻿import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { FraudEnterpriseService } from './fraud-enterprise.service';
 import { FraudCheckDto } from './dto/fraud-check.dto';
 

@@ -1,4 +1,4 @@
-﻿import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateReferralPremiumDto, ReferralBonusPreviewDto, ReferralReminderDto } from './referral-premium.dto';
 
 export type ReferralPremiumPhase = 'PHASE_1_5_PERCENT' | 'PHASE_2_2_5_PERCENT' | 'ENDED';
@@ -190,7 +190,7 @@ export class ReferralPremiumService {
       phaseTwo: this.rules.PHASE_2_2_5_PERCENT,
       reminders: ['24 horas', '3 dias', '7 dias'],
       stopAutomaticRemindersAfter: '7 dias',
-      note: 'Bonus real deve ser creditado pela wallet com idempotencyKey por orderId para evitar duplicidade.',
+      note: 'Limite total do programa: R por indicador, sendo ate R na fase 1 e ate R na fase 2. Bonus real deve usar idempotencyKey por orderId para evitar duplicidade.',
     };
   }
 

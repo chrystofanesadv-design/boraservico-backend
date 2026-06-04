@@ -1,4 +1,4 @@
-﻿export type UploadPremiumKind =
+export type UploadPremiumKind =
   | 'SERVICE_PROOF_PHOTO'
   | 'CHECK_IN_PHOTO'
   | 'CHECK_OUT_PHOTO'

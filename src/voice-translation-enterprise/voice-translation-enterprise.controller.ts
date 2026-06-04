@@ -1,4 +1,4 @@
-﻿import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { VoiceTranslationEnterpriseService } from './voice-translation-enterprise.service';
 
 @Controller('voice-translation-enterprise')

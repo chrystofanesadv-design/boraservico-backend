@@ -83,13 +83,18 @@ export class AuthService {
       name,
       role,
       password: hashed,
+      canUseClient: true,
+      canUseProfessional: true,
+      activeEnvironment: role === 'PROFESSIONAL' ? 'PROFESSIONAL' : 'CLIENT',
     });
 
     await this.safeAudit('AUTH_REGISTERED', {
       userId: user.id,
       action: 'AUTH_REGISTERED',
       details: {
-        role: user.role,
+        role: this.effectiveRole(user),
+      baseRole: user.role,
+      activeEnvironment: user.activeEnvironment ?? this.defaultActiveEnvironment(user.role),
         professionalCategory,
         professionalSpecialties,
       },
@@ -160,7 +165,9 @@ export class AuthService {
       userId: user.id,
       action: 'AUTH_LOGIN_SUCCEEDED',
       details: {
-        role: user.role,
+        role: this.effectiveRole(user),
+      baseRole: user.role,
+      activeEnvironment: user.activeEnvironment ?? this.defaultActiveEnvironment(user.role),
       },
     });
 
@@ -171,6 +178,51 @@ export class AuthService {
       expires_in: getJwtExpiresIn(),
       refresh_expires_in: getRefreshTokenExpiresIn(),
       user: this.publicUser(user),
+    };
+  }
+  async switchEnvironment(userId: string, environment: any) {
+    const activeEnvironment = this.normalizeEnvironment(environment);
+    const user = await this.usersService.findById(userId);
+
+    if (!user) {
+      throw new UnauthorizedException('Usuario nao encontrado');
+    }
+
+    if (activeEnvironment === 'CLIENT' && user.canUseClient === false) {
+      throw new BadRequestException('Ambiente cliente indisponivel para este usuario');
+    }
+
+    if (activeEnvironment === 'PROFESSIONAL' && user.canUseProfessional === false) {
+      throw new BadRequestException('Ambiente profissional indisponivel para este usuario');
+    }
+
+    const updated = await this.usersService.update(user.id, {
+      activeEnvironment,
+      canUseClient: user.canUseClient ?? true,
+      canUseProfessional: user.canUseProfessional ?? true,
+    });
+
+    const tokens = this.issueTokens(updated);
+
+    await this.safeAudit('AUTH_ENVIRONMENT_SWITCHED', {
+      userId: updated.id,
+      action: 'AUTH_ENVIRONMENT_SWITCHED',
+      details: {
+        activeEnvironment,
+        baseRole: updated.role,
+        effectiveRole: this.effectiveRole(updated),
+      },
+    });
+
+    return {
+      success: true,
+      activeEnvironment,
+      access_token: tokens.accessToken,
+      token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+      expires_in: getJwtExpiresIn(),
+      refresh_expires_in: getRefreshTokenExpiresIn(),
+      user: this.publicUser(updated),
     };
   }
 
@@ -212,7 +264,9 @@ export class AuthService {
 
         result.push({
           email,
-          role: user.role,
+          role: this.effectiveRole(user),
+      baseRole: user.role,
+      activeEnvironment: user.activeEnvironment ?? this.defaultActiveEnvironment(user.role),
           status: Object.keys(updates).length > 0 ? 'updated' : 'exists',
         });
         continue;
@@ -231,7 +285,9 @@ export class AuthService {
         userId: user.id,
         action: 'AUTH_DEV_TEST_USER_CREATED',
         details: {
-          role: user.role,
+          role: this.effectiveRole(user),
+      baseRole: user.role,
+      activeEnvironment: user.activeEnvironment ?? this.defaultActiveEnvironment(user.role),
           purpose: 'login-dev-local',
           removeBeforeProduction: true,
         },
@@ -239,7 +295,9 @@ export class AuthService {
 
       result.push({
         email,
-        role: user.role,
+        role: this.effectiveRole(user),
+      baseRole: user.role,
+      activeEnvironment: user.activeEnvironment ?? this.defaultActiveEnvironment(user.role),
         status: 'created',
       });
     }
@@ -292,7 +350,9 @@ export class AuthService {
       userId: user.id,
       action: 'AUTH_TOKEN_REFRESHED',
       details: {
-        role: user.role,
+        role: this.effectiveRole(user),
+      baseRole: user.role,
+      activeEnvironment: user.activeEnvironment ?? this.defaultActiveEnvironment(user.role),
         rotated: true,
       },
     });
@@ -362,13 +422,18 @@ export class AuthService {
       name: data.name,
       role: data.role,
       password: hashed,
+      canUseClient: true,
+      canUseProfessional: true,
+      activeEnvironment: data.role === 'PROFESSIONAL' ? 'PROFESSIONAL' : 'CLIENT',
     });
 
     await this.safeAudit('AUTH_DEV_TEST_USER_AUTO_CREATED', {
       userId: user.id,
       action: 'AUTH_DEV_TEST_USER_AUTO_CREATED',
       details: {
-        role: user.role,
+        role: this.effectiveRole(user),
+      baseRole: user.role,
+      activeEnvironment: user.activeEnvironment ?? this.defaultActiveEnvironment(user.role),
         autoCreated: true,
         removeBeforeProduction: true,
       },
@@ -436,7 +501,9 @@ export class AuthService {
       sub: user.id,
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: this.effectiveRole(user),
+      baseRole: user.role,
+      activeEnvironment: user.activeEnvironment ?? this.defaultActiveEnvironment(user.role),
     };
 
     return {
@@ -458,7 +525,43 @@ export class AuthService {
 
   private publicUser(user: any) {
     const { password, ...result } = user;
-    return result;
+    return {
+      ...result,
+      canUseClient: user.canUseClient ?? true,
+      canUseProfessional: user.canUseProfessional ?? true,
+      activeEnvironment: user.activeEnvironment ?? this.defaultActiveEnvironment(user.role),
+      effectiveRole: this.effectiveRole(user),
+    };
+  }
+  private normalizeEnvironment(value: any) {
+    const environment = this.readString(value)?.toUpperCase();
+    const allowed = ['CLIENT', 'PROFESSIONAL'];
+
+    if (!environment || !allowed.includes(environment)) {
+      throw new BadRequestException('Ambiente invalido');
+    }
+
+    return environment;
+  }
+
+  private effectiveRole(user: any) {
+    if (user?.role === 'ADMIN') {
+      return 'ADMIN';
+    }
+
+    const activeEnvironment = (user?.activeEnvironment ?? user?.role ?? 'CLIENT')
+      .toString()
+      .toUpperCase();
+
+    if (activeEnvironment === 'PROFESSIONAL' && user?.canUseProfessional !== false) {
+      return 'PROFESSIONAL';
+    }
+
+    return 'CLIENT';
+  }
+
+  private defaultActiveEnvironment(role: any) {
+    return role === 'PROFESSIONAL' ? 'PROFESSIONAL' : 'CLIENT';
   }
 
   private tokenDigest(token: string) {

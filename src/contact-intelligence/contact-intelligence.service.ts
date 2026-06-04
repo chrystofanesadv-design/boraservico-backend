@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 export type ContactIntelligenceSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type ContactIntelligenceAction = 'ALLOW' | 'WARN' | 'BLOCK';

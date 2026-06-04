@@ -26,6 +26,11 @@ export class AuthController {
   login(@Body() body: any) {
     return this.authService.login(body.email, body.password);
   }
+  @UseGuards(JwtAuthGuard)
+  @Post('switch-environment')
+  switchEnvironment(@Request() req: any, @Body() body: any) {
+    return this.authService.switchEnvironment(req.user?.userId ?? req.user?.sub, body?.environment);
+  }
 
   @Post('dev-seed')
   @Throttle({ default: { limit: 10, ttl: 60000 } })

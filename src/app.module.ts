@@ -1,4 +1,5 @@
-import { RoutesDebugController } from './routes-debug.controller';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { GrowthAiStudioModule } from './growth-ai-studio/growth-ai-studio.module';
 import { LatamReadyEnterpriseModule } from './latam-ready-enterprise/latam-ready-enterprise.module';
 import { FinanceEnterpriseModule } from './finance-enterprise/finance-enterprise.module';
 import { UploadPremiumModule } from './upload-premium/upload-premium.module';
@@ -29,7 +30,6 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { UploadModule } from './upload/upload.module';
 import { RealtimeModule } from './realtime/realtime.module';
-import { PushModule } from './push/push.module';
 import { PaymentsRealModule } from './payments-real/payments-real.module';
 import { AiRealModule } from './ai-real/ai-real.module';
 import { SecurityModule } from './security/security.module';
@@ -41,15 +41,11 @@ import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ServicesModule } from './services/services.module';
 import { MatchingModule } from './matching/matching.module';
-import { PaymentsModule } from './payments/payments.module';
 import { DisputesModule } from './disputes/disputes.module';
 import { OrdersModule } from './orders/orders.module';
 import { HealthModule } from './health/health.module';
 import { WalletModule } from './wallet/wallet.module';
 import { ReputationModule } from './reputation/reputation.module';
-import { ReferralModule } from './referral/referral.module';
-import { TrackingModule } from './tracking/tracking.module';
-import { AiModule } from './ai/ai.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { TimelineModule } from './timeline/timeline.module';
@@ -59,14 +55,19 @@ import { VoiceModule } from './voice/voice.module';
 
 @Module({
   imports: [
+    AnalyticsModule,
+    GrowthAiStudioModule,
     GrowthAiEnterpriseModule,
     VoiceTranslationEnterpriseModule,
     ContactIntelligenceModule,
     FinanceEnterpriseModule,
-    LatamReadyEnterpriseModule,TrackingPremiumModule, 
+    LatamReadyEnterpriseModule,
+    TrackingPremiumModule, 
     ReferralPremiumModule,
     PushPremiumModule,
-    FraudEnterpriseModule,ProfessionalTeamsModule, ProfessionalProfileModule, 
+    FraudEnterpriseModule,
+    ProfessionalTeamsModule,
+    ProfessionalProfileModule, 
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
@@ -86,7 +87,7 @@ import { VoiceModule } from './voice/voice.module';
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 120 }]),
     AiRealModule,
     PaymentsRealModule,
-    PushModule,
+
     RealtimeModule,
     UploadModule,
     UploadPremiumModule,
@@ -100,15 +101,13 @@ import { VoiceModule } from './voice/voice.module';
     DealAiModule,
     ServicesModule,
     MatchingModule,
-    PaymentsModule,
+
     DisputesModule,
     OrdersModule,
     HealthModule,
     WalletModule,
     ReputationModule,
-    ReferralModule,
-    TrackingModule,
-    AiModule,
+
     NotificationsModule,
     ObservabilityModule,
     TimelineModule,
@@ -117,7 +116,7 @@ import { VoiceModule } from './voice/voice.module';
     VoiceModule,
   ],
 
-  controllers: [RoutesDebugController, ],
+  controllers: [],
   providers: [
     {
       provide: APP_GUARD,
@@ -126,35 +125,4 @@ import { VoiceModule } from './voice/voice.module';
   ],
 })
 export class AppModule {}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

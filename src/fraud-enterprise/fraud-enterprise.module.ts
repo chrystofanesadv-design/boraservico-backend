@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { FraudEnterpriseController } from './fraud-enterprise.controller';
 import { FraudEnterpriseService } from './fraud-enterprise.service';
 

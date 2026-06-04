@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ProfessionalProfileController } from './professional-profile.controller';
 import { ProfessionalProfileService } from './professional-profile.service';
 

@@ -1,4 +1,4 @@
-﻿export type MarketingChannel = 'tiktok' | 'instagram' | 'youtube_shorts' | 'push' | 'referral' | 'organic';
+export type MarketingChannel = 'tiktok' | 'instagram' | 'youtube_shorts' | 'push' | 'referral' | 'organic';
 export type CampaignUrgency = 'low' | 'normal' | 'high' | 'urgent';
 
 export class GrowthCampaignRequestDto {

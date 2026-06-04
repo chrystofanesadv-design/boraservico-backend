@@ -1,4 +1,4 @@
-﻿export type PremiumPushEventType =
+export type PremiumPushEventType =
   | 'RFQ_CREATED'
   | 'RFQ_RECEIVED'
   | 'QUOTE_SENT'

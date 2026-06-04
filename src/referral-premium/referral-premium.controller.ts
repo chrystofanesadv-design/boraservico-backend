@@ -1,4 +1,4 @@
-﻿import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { CreateReferralPremiumDto, ReferralBonusPreviewDto, ReferralReminderDto } from './referral-premium.dto';
 import { ReferralPremiumService } from './referral-premium.service';
 

@@ -1,4 +1,4 @@
-﻿import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CityGrowthSignalDto, GrowthCampaignRequestDto, ViralScoreRequestDto } from './growth-ai-enterprise.dto';
 
 type GrowthRecommendation = {

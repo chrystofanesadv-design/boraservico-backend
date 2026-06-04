@@ -1,4 +1,4 @@
-﻿export type DirectContactFilterResult = {
+export type DirectContactFilterResult = {
   blocked: boolean;
   message: string;
   reasons: string[];

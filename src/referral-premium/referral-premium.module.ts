@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ReferralPremiumController } from './referral-premium.controller';
 import { ReferralPremiumService } from './referral-premium.service';
 

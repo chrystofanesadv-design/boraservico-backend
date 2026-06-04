@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { PrivateStorageController } from './private-storage.controller';
 import { PrivateStorageService } from './private-storage.service';
 

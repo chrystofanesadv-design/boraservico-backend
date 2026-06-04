@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ContactIntelligenceService } from '../contact-intelligence/contact-intelligence.service';
 
 type SupportedLocale = 'pt_BR' | 'en_US' | 'es_ES';

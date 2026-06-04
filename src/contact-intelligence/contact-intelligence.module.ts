@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ContactIntelligenceController } from './contact-intelligence.controller';
 import { ContactIntelligenceService } from './contact-intelligence.service';
 
